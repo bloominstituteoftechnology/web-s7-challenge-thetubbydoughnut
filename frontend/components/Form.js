@@ -33,6 +33,11 @@ const toppings = [
   { topping_id: '5', text: 'Ham' },
 ]
 
+const sizes = [
+  { size: "S", text: 'small'},
+  { size: "M", text: 'medium'},
+  { size: "L", text: 'large'},
+]
 
 export default function Form() {
   const [size, setSize] = useState('')
@@ -73,7 +78,7 @@ export default function Form() {
     .then((res) => {
       console.log(res)
       setSubmitStatus('success')
-      
+
     })
     .catch((err) => {
       console.error(err);
@@ -86,7 +91,7 @@ export default function Form() {
   return (
     <form onSubmit={handleSubmit}>
       <h2>Order Your Pizza</h2>
-      {submitStatus === 'success' && <div className='success'>Thank you for your order!</div>}
+      {submitStatus === 'success' && <div className='success'>Thank you for your order, {fullName}! Your {size}</div>}
       {submitStatus === 'failure' && <div className='failure'>Something went wrong</div>}
 
       <div className="input-group">
