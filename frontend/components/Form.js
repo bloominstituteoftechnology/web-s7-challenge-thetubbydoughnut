@@ -10,6 +10,7 @@ const validationErrors = {
 
 // 👇 Here you will create your schema.
 
+
 // 👇 This array could help you construct your checkboxes using .map in the JSX.
 const toppings = [
   { topping_id: '1', text: 'Pepperoni' },
@@ -18,6 +19,7 @@ const toppings = [
   { topping_id: '4', text: 'Mushrooms' },
   { topping_id: '5', text: 'Ham' },
 ]
+
 
 export default function Form() {
   return (
@@ -39,24 +41,27 @@ export default function Form() {
           <label htmlFor="size">Size</label><br />
           <select id="size">
             <option value="">----Choose Size----</option>
-            {/* Fill out the missing options */}
+            <option value="">Small</option>
+            <option value="">Medium</option>
+            <option value="">Large</option>
           </select>
         </div>
         {true && <div className='error'>Bad value</div>}
       </div>
 
       <div className="input-group">
-        {/* 👇 Maybe you could generate the checkboxes dynamically */}
-        <label key="1">
+        {toppings.map((topping, idx) => (
+        <label key={idx}>
           <input
-            name="Pepperoni"
+            name={topping.text}
             type="checkbox"
           />
-          Pepperoni<br />
+          {topping.text}<br />
         </label>
+        ))}
       </div>
       {/* 👇 Make sure the submit stays disabled until the form validates! */}
-      <input type="submit" />
+      <input type="submit" disabled='disabled' />
     </form>
   )
 }
