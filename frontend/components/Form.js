@@ -39,13 +39,13 @@ export default function Form() {
   const [fullName, setfullName] = useState('')
   const [formState, setFormState] = useState({fullName,size});
   const [errors, setErrors] = useState({});
-  const [disabled, setDisabled] = useState()
+  const [disabled, setDisabled] = useState(true)
 
   useEffect(() => {
+    console.log(formState)
     pizzaSchema.isValid(formState).then(valid => 
-      setDisabled(!valid)
-    )
-  },[formState])
+      setDisabled(!valid));
+  }, [formState])
 
   const handleChange = (evt) => {
     const { name, value } = evt.target;
@@ -96,7 +96,7 @@ export default function Form() {
       <div className="input-group">
         <div>
           <label htmlFor="size">Size</label><br />
-          <select id="size" value={size} onChange={(e) => setSize(e.target.value)}>
+          <select id="size" value={size} onChange={handleChange} name='size'>
             <option value="">----Choose Size----</option>
             <option value="S">Small</option>
             <option value="M">Medium</option>
