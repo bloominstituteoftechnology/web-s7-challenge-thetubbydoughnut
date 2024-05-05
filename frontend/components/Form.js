@@ -34,9 +34,9 @@ const toppings = [
 ]
 
 const sizes = [
-  { size: "S", text: 'small'},
-  { size: "M", text: 'medium'},
-  { size: "L", text: 'large'},
+  { size: "S", text: 'Small'},
+  { size: "M", text: 'Medium'},
+  { size: "L", text: 'Large'},
 ]
 
 export default function Form() {
@@ -107,9 +107,12 @@ export default function Form() {
           <label htmlFor="size">Size</label><br />
           <select id="size" value={size} onChange={handleChange} name='size'>
             <option value="">----Choose Size----</option>
-            <option value="S">Small</option>
+          {sizes.map((si, idx) => (
+            <option key={idx} value={si.size}>{si.text}</option>
+          ))}
+            {/* <option value="S">Small</option>
             <option value="M">Medium</option>
-            <option value="L">Large</option>
+            <option value="L">Large</option> */}
           </select>
         </div>
         {errors.size && <div className='error'>{errors.size}</div>}
