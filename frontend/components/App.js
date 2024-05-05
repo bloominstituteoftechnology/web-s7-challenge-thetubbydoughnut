@@ -2,7 +2,7 @@ import React from 'react'
 import Home from './Home'
 import Form from './Form'
 import { Link } from 'react-router-dom'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 
 function App() {
   return (

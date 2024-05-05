@@ -8,6 +8,15 @@ const validationErrors = {
   sizeIncorrect: 'size must be S or M or L'
 }
 
+// 👇 This array could help you construct your checkboxes using .map in the JSX.
+const toppings = [
+  { topping_id: '1', text: 'Pepperoni' },
+  { topping_id: '2', text: 'Green Peppers' },
+  { topping_id: '3', text: 'Pineapple' },
+  { topping_id: '4', text: 'Mushrooms' },
+  { topping_id: '5', text: 'Ham' },
+]
+
 // 👇 Here you will create your schema.
 const pizzaSchema = yup.object().shape({
   fullName:
@@ -19,19 +28,13 @@ const pizzaSchema = yup.object().shape({
     yup.string().oneOf(['S','M','L'],
     validationErrors.sizeIncorrect)
     .required(),
+
+  ...toppings.reduce((acc, topping) => ({ ...acc, [topping.text]: yup.boolean() }), {}),
 })
 
 
 
 
-// 👇 This array could help you construct your checkboxes using .map in the JSX.
-const toppings = [
-  { topping_id: '1', text: 'Pepperoni' },
-  { topping_id: '2', text: 'Green Peppers' },
-  { topping_id: '3', text: 'Pineapple' },
-  { topping_id: '4', text: 'Mushrooms' },
-  { topping_id: '5', text: 'Ham' },
-]
 
 const sizes = [
   { size: "S", text: 'Small'},
@@ -42,7 +45,10 @@ const sizes = [
 export default function Form() {
   const [size, setSize] = useState('')
   const [fullName, setfullName] = useState('')
-  const [formState, setFormState] = useState({fullName,size});
+  const [formState, setFormState] = useState({fullName,size,
+    ...toppings.reduce((acc, topping) => 
+      ({ ...acc, [topping.text]: false}), {}),
+  });
   const [errors, setErrors] = useState({});
   const [disabled, setDisabled] = useState(true)
   const [submitStatus, setSubmitStatus] = useState('')
@@ -54,22 +60,24 @@ export default function Form() {
   }, [formState])
 
   const handleChange = (evt) => {
-    const { name, value } = evt.target;
+    const { name, value, checked, type } = evt.target;
+    const valueToUpdate = type === 'checkbox' ? checked : value;
     if (name === 'fullName') {
       setfullName(value)
     } else if (name === "size") {
       setSize(value)
     }
-    setFormState({
-      ...formState,
-      [name]: value,
-    });
+      setFormState({
+        ...formState,
+        [name]: valueToUpdate,
+      });
 
     yup.reach(pizzaSchema, name)
     .validate(value)
     .then(() => setErrors({ ...errors, [name]: ''}))
     .catch((err) => setErrors({...errors, [name]: err.errors[0]}))
   };
+
 
   const handleSubmit = (evt) => {
     evt.preventDefault();
@@ -91,7 +99,24 @@ export default function Form() {
   return (
     <form onSubmit={handleSubmit}>
       <h2>Order Your Pizza</h2>
-      {submitStatus === 'success' && <div className='success'>Thank you for your order, {fullName}! Your {size}</div>}
+      {submitStatus === 'success' && <div className='success'>
+      Thank you for your order, {fullName}!
+      Your {sizes.find(s => s.size === size).text.toLowerCase()} 
+       pizza with {(() => {
+         const numToppings = Object.values(formState).filter(value => value === true).length - 2;
+         let toppingMessage = '' 
+         if (numToppings > 1) {
+            toppingMessage = `${numToppings} toppings`;
+          } 
+          else if (numToppings === 1) {
+            toppingMessage = "1 topping";
+          }
+          else {
+            toppingMessage = 'no toppings';
+          }
+          return toppingMessage;
+      })()} is on its way!
+      </div>}
       {submitStatus === 'failure' && <div className='failure'>Something went wrong</div>}
 
       <div className="input-group">
@@ -110,9 +135,6 @@ export default function Form() {
           {sizes.map((si, idx) => (
             <option key={idx} value={si.size}>{si.text}</option>
           ))}
-            {/* <option value="S">Small</option>
-            <option value="M">Medium</option>
-            <option value="L">Large</option> */}
           </select>
         </div>
         {errors.size && <div className='error'>{errors.size}</div>}
@@ -124,6 +146,8 @@ export default function Form() {
           <input
             name={topping.text}
             type="checkbox"
+            checked={formState[topping.text]}
+            onChange={handleChange}
           />
           {topping.text}<br />
         </label>
