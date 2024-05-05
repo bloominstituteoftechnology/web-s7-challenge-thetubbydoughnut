@@ -40,6 +40,7 @@ export default function Form() {
   const [formState, setFormState] = useState({fullName,size});
   const [errors, setErrors] = useState({});
   const [disabled, setDisabled] = useState(true)
+  const [submitStatus, setSubmitStatus] = useState('')
 
   useEffect(() => {
     console.log(formState)
@@ -71,9 +72,12 @@ export default function Form() {
     pizzaSchema.validate(formState)
     .then((res) => {
       console.log(res)
+      setSubmitStatus('success')
+      
     })
     .catch((err) => {
       console.error(err);
+      setSubmitStatus('failure')
     })
   }
   
@@ -82,8 +86,8 @@ export default function Form() {
   return (
     <form onSubmit={handleSubmit}>
       <h2>Order Your Pizza</h2>
-      {true && <div className='success'>Thank you for your order!</div>}
-      {true && <div className='failure'>Something went wrong</div>}
+      {submitStatus === 'success' && <div className='success'>Thank you for your order!</div>}
+      {submitStatus === 'failure' && <div className='failure'>Something went wrong</div>}
 
       <div className="input-group">
         <div>
