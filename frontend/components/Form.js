@@ -32,61 +32,74 @@ const pizzaSchema = yup.object().shape({
   ...toppings.reduce((acc, topping) => ({ ...acc, [topping.text]: yup.boolean() }), {}),
 })
 
-
-
-
-
 const sizes = [
   { size: "S", text: 'Small'},
   { size: "M", text: 'Medium'},
   { size: "L", text: 'Large'},
 ]
 
+const initialFormState = {
+  fullName: '',
+  size: '',
+  ...toppings.reduce((acc, topping) => 
+    ({ ...acc, [topping.text]: false}), {}),
+};
+
 export default function Form() {
   const [size, setSize] = useState('')
   const [fullName, setfullName] = useState('')
-  const [formState, setFormState] = useState({fullName,size,
-    ...toppings.reduce((acc, topping) => 
-      ({ ...acc, [topping.text]: false}), {}),
-  });
+  const [formState, setFormState] = useState(initialFormState);
   const [errors, setErrors] = useState({});
   const [disabled, setDisabled] = useState(true)
   const [submitStatus, setSubmitStatus] = useState('')
   const [submittedData, setSubmittedData] = useState(null)
 
   useEffect(() => {
-    console.log('formstate: ', formState)
     pizzaSchema.isValid(formState).then(valid => 
       setDisabled(!valid));
   }, [formState])
-  
-  useEffect(() => {
-    if (submitStatus === 'success') {
-      console.log('Submitted Data: ', submittedData)
+
+  function debounce(f, delay) {
+    let timeoutId;
+    return (...args) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      timeoutId = setTimeout(() => {
+        f.apply(null, args);
+      }, delay);
     }
-  }, [submitStatus, submittedData])
+  }
+
+
+  const validateField = debounce((name, value) => {
+    yup.reach(pizzaSchema, name)
+      .validate(value)
+      .then(() => setErrors(prevErrors => 
+        ({ ...prevErrors, [name]: ''})))
+      .catch((err) => setErrors(prevErrors => (
+        {...prevErrors, [name]: err.errors[0]})))
+  },300)
 
   const handleChange = React.useCallback(
     (evt) => {
       const { name, value, checked, type } = evt.target;
       const valueToUpdate = type === 'checkbox' ? checked : value;
+      
+      setFormState(prevState => {
+        const newState = { ...prevState, [name]: valueToUpdate };
+      validateField(name,valueToUpdate)
+        return newState;
+      });
+
       if (name === 'fullName') {
         setfullName(value)
-      } else if (name === "size") {
+      }
+
+      if (name === 'size') {
         setSize(value)
       }
-        setFormState({
-          ...formState,
-          [name]: valueToUpdate,
-        });
-  
-      yup.reach(pizzaSchema, name)
-      .validate(value)
-      .then(() => setErrors({ ...errors, [name]: ''}))
-      .catch((err) => setErrors({...errors, [name]: err.errors[0]}))
-    }
-  );
-
+    },[]);
 
   const handleSubmit = React.useCallback(
     (evt) => {
@@ -138,7 +151,7 @@ export default function Form() {
       <div className="input-group">
         <div>
           <label htmlFor="fullName">Full Name</label><br />
-          <input value={fullName} onChange={handleChange} placeholder="Type full name" id="fullName" name='fullName'type="text" />
+          <input value={fullName} onChange={handleChange}  placeholder="Type full name" id="fullName" name='fullName'type="text" />
         </div>
         {errors.fullName && <div className='error'>{errors.fullName}</div>}
       </div>
