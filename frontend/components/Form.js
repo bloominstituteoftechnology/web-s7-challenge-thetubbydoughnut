@@ -109,7 +109,7 @@ export default function Form({
       }
       let error = '';
       try { yup.reach(pizzaSchema, name)
-      .validateSync(value);
+      .validateSync(value.trim());
       }
       catch (err) { error = err.errors
       }
