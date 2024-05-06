@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import * as yup from 'yup'
 
 // 👇 Here are the validation errors you will use with Yup.
@@ -19,18 +19,16 @@ const toppings = [
 
 // 👇 Here you will create your schema.
 const pizzaSchema = yup.object().shape({
-  fullName:
-    yup.string().min(3, validationErrors.fullNameTooShort)
-    .max(20, validationErrors.fullNameTooLong)
-    .required(),
+  fullName: yup.string()
+    .required(validationErrors.fullNameTooShort)
+    .min(3, validationErrors.fullNameTooShort)
+    .max(20, validationErrors.fullNameTooLong),
 
-  size:
-    yup.string().oneOf(['S','M','L'],
-    validationErrors.sizeIncorrect)
-    .required(),
-
+  size: yup.string()
+    .required(validationErrors.sizeIncorrect)
+    .oneOf(['S','M','L'], validationErrors.sizeIncorrect),
   ...toppings.reduce((acc, topping) => ({ ...acc, [topping.text]: yup.boolean() }), {}),
-})
+});
 
 const sizes = [
   { size: "S", text: 'Small'},
@@ -45,14 +43,16 @@ const initialFormState = {
     ({ ...acc, [topping.text]: false}), {}),
 };
 
-export default function Form() {
-  const [size, setSize] = useState('')
-  const [fullName, setfullName] = useState('')
-  const [formState, setFormState] = useState(initialFormState);
-  const [errors, setErrors] = useState({});
-  const [disabled, setDisabled] = useState(true)
-  const [submitStatus, setSubmitStatus] = useState('')
-  const [submittedData, setSubmittedData] = useState(null)
+export default function Form({ 
+  size, setSize,
+  fullName,setfullName,
+  formState, setFormState,
+  errors, setErrors,
+  disabled, setDisabled,
+  submitStatus, setSubmitStatus,
+  submittedData, setSubmittedData,
+  touched, setTouched
+}) {
 
   useEffect(() => {
     pizzaSchema.isValid(formState).then(valid => 
@@ -63,17 +63,14 @@ export default function Form() {
     for(let field in formState) {
       validateField(field, formState[field])
     }
-  },[formState])
+  },[size])
 
-  const validateField = (name, value) => {
-    yup.reach(pizzaSchema, name)
-    .validate(value)
-    .then(() => setErrors(prevErrors => 
-      ({ ...prevErrors, [name]: ''})))
-      .catch((err) => setErrors(prevErrors => (
-        {...prevErrors, [name]: err.errors[0]})))
-      }
-
+  useEffect(() => {
+    for(let field in formState) {
+      validateField(field, formState[field])
+    }
+  },[fullName])
+  
   const handleChange = React.useCallback(
     (evt) => {
       const { name, value, checked, type } = evt.target;
@@ -81,63 +78,90 @@ export default function Form() {
       
       setFormState(prevState => {
         const newState = { ...prevState, [name]: valueToUpdate };
-      validateField(name,valueToUpdate)
+        validateField(name,valueToUpdate)
         return newState;
       });
+      
+      setTouched(prevTouched => ({ ...prevTouched, [name]: true }))
 
       if (name === 'fullName') {
         setfullName(value)
       }
-
+      
       if (name === 'size') {
         setSize(value)
       }
     },[]);
-
-  const handleSubmit = React.useCallback(
-    (evt) => {
-      evt.preventDefault();
     
-      pizzaSchema.validate(formState)
-      .then((res) => {
-  
+    // const debounce = (func, delay) => {
+    //   let debounceTimer;
+    //   return function() {
+    //     const context = this;
+    //     const args = arguments;
+    //     clearTimeout(debounceTimer);
+    //     debounceTimer = setTimeout(() => func.apply(context, args),delay);
+    //   }
+    // }
+
+    const validateField = (name, value) => {
+      if(!touched[name]) {
+        return;
+      }
+      let error = '';
+      try { yup.reach(pizzaSchema, name)
+      .validateSync(value);
+      }
+      catch (err) { error = err.errors
+      }
+      setErrors(prevErrors => (
+        {...prevErrors, [name]: error }))
+      }
+
+    const handleSubmit = React.useCallback(
+      (evt) => {
+        evt.preventDefault();
+        try {
+        pizzaSchema.validateSync(formState)
+         
         setSubmitStatus('success')
         setSubmittedData(formState)
-  
-        setFormState({fullName: '', size: '',
+        setFormState({
+          fullName: '', 
+          size: '',
           ...toppings.reduce((acc, topping) => ({...acc, [topping.text]: false}), {}),
-        })
-  
+        });
+        setTouched({})
         setSize(''),
         setfullName('')
-      })
-      .catch((err) => {
+      }
+      catch (err) {
         console.error(err);
         setSubmitStatus('failure')
-      })
-    }
-  );
+      }
+    }, [formState, pizzaSchema]);
   
+
+    let toppingMessage = '' 
+    if (submitStatus === 'success' && submittedData) {
+      const numToppings = Object.values(submittedData).filter(value => value === true).length;
+      if (numToppings > 1) {
+         toppingMessage = `${numToppings} toppings`;
+       } 
+       else if (numToppings === 1) {
+         toppingMessage = "1 topping";
+       }
+       else {
+         toppingMessage = 'no toppings';
+       }
+    }
+
   return (
     <form onSubmit={handleSubmit}>
       <h2>Order Your Pizza</h2>
       {submitStatus === 'success' && submittedData && <div className='success'>
       Thank you for your order, {submittedData.fullName}!
       Your {sizes.find(s => s.size === submittedData.size).text.toLowerCase()} 
-       {' pizza with'} {(() => {
-         const numToppings = Object.values(submittedData).filter(value => value === true).length;
-         let toppingMessage = '' 
-         if (numToppings > 1) {
-            toppingMessage = `${numToppings} toppings`;
-          } 
-          else if (numToppings === 1) {
-            toppingMessage = "1 topping";
-          }
-          else {
-            toppingMessage = 'no toppings';
-          }
-          return toppingMessage;
-      })()} is on its way!
+       {' pizza with'} {toppingMessage} is on its way!
       </div>}
       {submitStatus === 'failure' && <div className='failure'>Something went wrong</div>}
 
