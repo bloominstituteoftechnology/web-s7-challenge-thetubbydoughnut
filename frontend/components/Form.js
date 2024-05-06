@@ -52,12 +52,19 @@ export default function Form() {
   const [errors, setErrors] = useState({});
   const [disabled, setDisabled] = useState(true)
   const [submitStatus, setSubmitStatus] = useState('')
+  const [submittedData, setSubmittedData] = useState(null)
 
   useEffect(() => {
-    console.log(formState)
+    console.log('formstate: ', formState)
     pizzaSchema.isValid(formState).then(valid => 
       setDisabled(!valid));
   }, [formState])
+  
+  useEffect(() => {
+    if (submitStatus === 'success') {
+      console.log('Submitted Data: ', submittedData)
+    }
+  }, [submitStatus, submittedData])
 
   const handleChange = (evt) => {
     const { name, value, checked, type } = evt.target;
@@ -84,9 +91,16 @@ export default function Form() {
   
     pizzaSchema.validate(formState)
     .then((res) => {
-      console.log(res)
-      setSubmitStatus('success')
 
+      setSubmitStatus('success')
+      setSubmittedData(formState)
+
+      setFormState({fullName: '', size: '',
+        ...toppings.reduce((acc, topping) => ({...acc, [topping.text]: false}), {}),
+      })
+
+      setSize(''),
+      setfullName('')
     })
     .catch((err) => {
       console.error(err);
@@ -95,15 +109,14 @@ export default function Form() {
   }
   
   
-  
   return (
     <form onSubmit={handleSubmit}>
       <h2>Order Your Pizza</h2>
-      {submitStatus === 'success' && <div className='success'>
-      Thank you for your order, {fullName}!
-      Your {sizes.find(s => s.size === size).text.toLowerCase()} 
-       pizza with {(() => {
-         const numToppings = Object.values(formState).filter(value => value === true).length - 2;
+      {submitStatus === 'success' && submittedData && <div className='success'>
+      Thank you for your order, {submittedData.fullName}!
+      Your {sizes.find(s => s.size === submittedData.size).text.toLowerCase()} 
+       {' pizza with'} {(() => {
+         const numToppings = Object.values(submittedData).filter(value => value === true).length;
          let toppingMessage = '' 
          if (numToppings > 1) {
             toppingMessage = `${numToppings} toppings`;
