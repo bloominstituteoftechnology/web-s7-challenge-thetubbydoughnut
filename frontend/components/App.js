@@ -12,7 +12,7 @@ function App() {
         <Link to='/order'>Order</Link>
       </nav>
       <Routes>
-        <Route path='/' element={<Home />} />
+        <Route path='*' element={<Home />} />
         <Route path='/order' element={<Form />} />
       </Routes>
     </div>

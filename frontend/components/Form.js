@@ -66,48 +66,51 @@ export default function Form() {
     }
   }, [submitStatus, submittedData])
 
-  const handleChange = (evt) => {
-    const { name, value, checked, type } = evt.target;
-    const valueToUpdate = type === 'checkbox' ? checked : value;
-    if (name === 'fullName') {
-      setfullName(value)
-    } else if (name === "size") {
-      setSize(value)
+  const handleChange = React.useCallback(
+    (evt) => {
+      const { name, value, checked, type } = evt.target;
+      const valueToUpdate = type === 'checkbox' ? checked : value;
+      if (name === 'fullName') {
+        setfullName(value)
+      } else if (name === "size") {
+        setSize(value)
+      }
+        setFormState({
+          ...formState,
+          [name]: valueToUpdate,
+        });
+  
+      yup.reach(pizzaSchema, name)
+      .validate(value)
+      .then(() => setErrors({ ...errors, [name]: ''}))
+      .catch((err) => setErrors({...errors, [name]: err.errors[0]}))
     }
-      setFormState({
-        ...formState,
-        [name]: valueToUpdate,
-      });
-
-    yup.reach(pizzaSchema, name)
-    .validate(value)
-    .then(() => setErrors({ ...errors, [name]: ''}))
-    .catch((err) => setErrors({...errors, [name]: err.errors[0]}))
-  };
+  );
 
 
-  const handleSubmit = (evt) => {
-    evt.preventDefault();
+  const handleSubmit = React.useCallback(
+    (evt) => {
+      evt.preventDefault();
+    
+      pizzaSchema.validate(formState)
+      .then((res) => {
   
-    pizzaSchema.validate(formState)
-    .then((res) => {
-
-      setSubmitStatus('success')
-      setSubmittedData(formState)
-
-      setFormState({fullName: '', size: '',
-        ...toppings.reduce((acc, topping) => ({...acc, [topping.text]: false}), {}),
+        setSubmitStatus('success')
+        setSubmittedData(formState)
+  
+        setFormState({fullName: '', size: '',
+          ...toppings.reduce((acc, topping) => ({...acc, [topping.text]: false}), {}),
+        })
+  
+        setSize(''),
+        setfullName('')
       })
-
-      setSize(''),
-      setfullName('')
-    })
-    .catch((err) => {
-      console.error(err);
-      setSubmitStatus('failure')
-    })
-  }
-  
+      .catch((err) => {
+        console.error(err);
+        setSubmitStatus('failure')
+      })
+    }
+  );
   
   return (
     <form onSubmit={handleSubmit}>
