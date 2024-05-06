@@ -59,27 +59,20 @@ export default function Form() {
       setDisabled(!valid));
   }, [formState])
 
-  function debounce(f, delay) {
-    let timeoutId;
-    return (...args) => {
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
-      timeoutId = setTimeout(() => {
-        f.apply(null, args);
-      }, delay);
+  useEffect(() => {
+    for(let field in formState) {
+      validateField(field, formState[field])
     }
-  }
+  },[formState])
 
-
-  const validateField = debounce((name, value) => {
+  const validateField = (name, value) => {
     yup.reach(pizzaSchema, name)
-      .validate(value)
-      .then(() => setErrors(prevErrors => 
-        ({ ...prevErrors, [name]: ''})))
+    .validate(value)
+    .then(() => setErrors(prevErrors => 
+      ({ ...prevErrors, [name]: ''})))
       .catch((err) => setErrors(prevErrors => (
         {...prevErrors, [name]: err.errors[0]})))
-  },300)
+      }
 
   const handleChange = React.useCallback(
     (evt) => {
@@ -153,7 +146,7 @@ export default function Form() {
           <label htmlFor="fullName">Full Name</label><br />
           <input value={fullName} onChange={handleChange}  placeholder="Type full name" id="fullName" name='fullName'type="text" />
         </div>
-        {errors.fullName && <div className='error'>{errors.fullName}</div>}
+        {errors.fullName && errors.fullName !== '' && <div className='error'>{errors.fullName}</div>}
       </div>
 
       <div className="input-group">
